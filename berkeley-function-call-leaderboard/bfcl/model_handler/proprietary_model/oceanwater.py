@@ -25,11 +25,14 @@ from openai import OpenAI
 class OceanWaterHandler(BaseHandler):
     def __init__(self, model_name, temperature) -> None:
         super().__init__(model_name, temperature)
+        internal_model_name = model_name.split("/")[-1].replace("-FC", "") # Remove the prefix and FC suffix e.g. oceanwater/gpt-4o-2024-08-06 -> gpt-4o-2024-08-06
         self.model_style = ModelStyle.OpenAI
         # self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
-        self.model = ChatOpenAI(model=model_name, temperature=0, api_key=os.getenv("OPENAI_API_KEY"))        
+        self.model = ChatOpenAI(model=internal_model_name, temperature=0, api_key=os.getenv("OPENAI_API_KEY"))        
         self.tool_search_client = ToolSearchClient(api_key="")
+        self.agent = None
+        self.agentState = None
 
     def decode_ast(self, result, language="Python"):
         if "FC" not in self.model_name:
@@ -57,11 +60,31 @@ class OceanWaterHandler(BaseHandler):
         inference_data["inference_input_log"] = {"message": repr(message), "tools": tools}
         
         # Instantiate Dynamic Tool Selection Agents
-        tool_selection_agent, initial_state = self.tool_search_client.get_tool_selection_agent(self.model)
-        initial_state["messages"] = repr(message)
+        # if len(message) == 1:
+        task_system_prompt = message[0].get("content")
+            # if self.agent is None:
+        self.agent, self.agentState = self.tool_search_client.get_tool_selection_agent(self.model, task_system_prompt, use_memory=False)
+        # initial_state["messages"] = repr(message)
         
-        return tool_selection_agent.invoke(initial_state)
-
+        print("AGENT STATE: ", self.agentState)
+        # TODO: might have to add message to agentState
+        # api_response = self.agent.invoke(self.agentState, {"configurable": {"thread_id": "1"}})
+        
+        # old_state = self.agentState
+        # for s in self.agent.stream(self.agentState, {"configurable": {"thread_id": "1"}}, stream_mode="values"):
+        #     print("STREAM: ", s)
+        #     messages = dict(s)["messages"]
+        #     if len(messages) > 0:
+        #         messages[-1].pretty_print()
+        #         print("\n\n")
+                
+        api_response = self.agent.invoke(self.agentState)
+        
+        
+        print("POST TOOL SELECTION AGENT INVOKE", self.agentState)
+        print("API RESPONSE: ", api_response)
+        return api_response
+    
     def _pre_query_processing_FC(self, inference_data: dict, test_entry: dict) -> dict:
         inference_data["message"] = []
         return inference_data
@@ -85,43 +108,58 @@ class OceanWaterHandler(BaseHandler):
         openai_messages = []
         input_tokens = 0
         output_tokens = 0
+        tool_call_ids = []
+        model_responses = []
+
         
         for msg in api_response["messages"]:
             message = convert_to_openai_messages(msg)
-            input_tokens += message.usage_metadata["input_tokens"]
-            output_tokens += message.usage_metadata["output_tokens"]
+            print("ORIGINAL MESSAGE: ", msg)
+            print("OUTPUT MESSAGE: ", message)
+            if hasattr(msg, "usage_metadata"):
+                input_tokens += msg.usage_metadata["input_tokens"]
+                output_tokens += msg.usage_metadata["output_tokens"]
             
-            try:
-                model_responses = []
-                for func_call in message.tool_calls:
-                    if func_call["function"]["name"] == "select_tools":
-                        continue # Skip the select_tools tool call
-                    if func_call["function"]["name"] == "selected_dynamic_tool_call":
-                        model_responses.append({
-                            func_call["function"]["arguments"]["selectedFunctionId"]: func_call["function"]["arguments"]["selectedFunctionArguments"]
-                        })
-                tool_call_ids = [
-                    func_call["id"] for func_call in message.tool_calls if func_call["function"]["name"] != "select_tools"
-                ]
-                
-                # If valid message, convert to OpenAI format (i.e. not select_tools)
+            # try:
+            if not "tool_calls" in message:
+                # model_responses.append(message["content"])
                 openai_messages.append(message)
+                continue
+            
+            for func_call in message["tool_calls"]:
+                if func_call["function"]["name"] == "select_tools":
+                    continue # Skip the select_tools tool call
+                if func_call["function"]["name"] == "selected_dynamic_tool_call":
+                    arguments = json.loads(func_call["function"]["arguments"])
+                    model_responses.append({
+                        arguments["selectedFunctionId"]: arguments["selectedFunctionInputs"]
+                    })
+            tool_call_ids.extend([
+                func_call["id"] for func_call in message["tool_calls"] if func_call["function"]["name"] != "select_tools"
+            ])
+            
+            # If valid message, convert to OpenAI format (i.e. not select_tools)
+            openai_messages.append(message)
 
-            except:
-                model_responses = message.content
-                tool_call_ids = []
-                openai_messages.append(message)
+            # except:
+            #     model_responses = [message["content"]]
+            #     tool_call_ids = []
+            #     openai_messages.append(message)
 
 
         # model_responses_message_for_chat_history = openai_messages
         
-        return {
+        obj = {
             "model_responses": model_responses,
             "model_responses_message_for_chat_history": openai_messages, #TODO: Check if this is correct
             "tool_call_ids": tool_call_ids,
             "input_token": input_tokens,
             "output_token": output_tokens,
         }
+        
+        print("RETURNING PARSE: ", obj)
+        
+        return obj
 
     def add_first_turn_message_FC(
         self, inference_data: dict, first_turn_message: list[dict]
@@ -171,9 +209,11 @@ class OceanWaterHandler(BaseHandler):
         # Beta limitation: https://platform.openai.com/docs/guides/reasoning/beta-limitations
         temperature = 1 if "o1-preview" in self.model_name or "o1-mini" in self.model_name else self.temperature
         m = ChatOpenAI(model=self.model_name, temperature=temperature, api_key=os.getenv("OPENAI_API_KEY"))
-        tool_selection_agent, initial_state = self.tool_search_client.get_tool_selection_agent(m)
-        initial_state["messages"] = repr(inference_data["message"])
-        api_response = tool_selection_agent.invoke(initial_state)
+        
+        print("INFERENCE DATA: ", inference_data["message"])
+        tool_selection_agent, initial_state = self.tool_search_client.get_tool_selection_agent(m, use_memory=True)
+        # initial_state["messages"] = inference_data["message"]
+        api_response = tool_selection_agent.invoke(initial_state, {"configurable": {"thread_id": "1"}})
 
         return api_response
 

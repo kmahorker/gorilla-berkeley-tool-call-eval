@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/Users/kaushik/Documents/OceanWater/.venv/bin/bfcl", line 5, in <module>
+    from bfcl.__main__ import cli
+  File "/Users/kaushik/Documents/OceanWater/gorilla-berkeley-tool-call-eval/berkeley-function-call-leaderboard/bfcl/__main__.py", line 7, in <module>
+    from bfcl._llm_response_generation import main as generation_main
+  File "/Users/kaushik/Documents/OceanWater/gorilla-berkeley-tool-call-eval/berkeley-function-call-leaderboard/bfcl/_llm_response_generation.py", line 17, in <module>
+    from bfcl.eval_checker.eval_runner_helper import load_file
+  File "/Users/kaushik/Documents/OceanWater/gorilla-berkeley-tool-call-eval/berkeley-function-call-leaderboard/bfcl/eval_checker/eval_runner_helper.py", line 9, in <module>
+    from bfcl.eval_checker.model_metadata import *
+  File "/Users/kaushik/Documents/OceanWater/gorilla-berkeley-tool-call-eval/berkeley-function-call-leaderboard/bfcl/eval_checker/model_metadata.py", line 1, in <module>
+    from bfcl.model_handler.handler_map import local_inference_handler_map
+  File "/Users/kaushik/Documents/OceanWater/gorilla-berkeley-tool-call-eval/berkeley-function-call-leaderboard/bfcl/model_handler/handler_map.py", line 27, in <module>
+    from bfcl.model_handler.proprietary_model.oceanwater import OceanWaterHandler
+  File "/Users/kaushik/Documents/OceanWater/gorilla-berkeley-tool-call-eval/berkeley-function-call-leaderboard/bfcl/model_handler/proprietary_model/oceanwater.py", line 7, in <module>
+    from agents.packages.core.tool_search.ToolSearchClient import ToolSearchClient
+ModuleNotFoundError: No module named 'agents'

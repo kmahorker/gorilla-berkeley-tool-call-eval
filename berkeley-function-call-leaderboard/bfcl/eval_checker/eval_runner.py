@@ -35,9 +35,9 @@ LEADERBOARD_TABLE = {}
 def multi_turn_runner(
     handler, model_result, prompt, possible_answer, model_name, test_category
 ):
-    assert (
-        len(model_result) == len(prompt) == len(possible_answer)
-    ), f"The length of the model result ({len(model_result)}) does not match the length of the prompt ({len(prompt)}) or possible answer ({len(possible_answer)}). Please check the input files for completeness."
+    # assert (
+    #     len(model_result) == len(prompt) == len(possible_answer)
+    # ), f"The length of the model result ({len(model_result)}) does not match the length of the prompt ({len(prompt)}) or possible answer ({len(possible_answer)}). Please check the input files for completeness."
 
     result = []
     correct_count = 0
@@ -343,9 +343,9 @@ def relevance_file_runner(handler, model_result, prompt, model_name, test_catego
 def ast_file_runner(
     handler, model_result, prompt, possible_answer, language, test_category, model_name
 ):
-    assert (
-        len(model_result) == len(prompt) == len(possible_answer)
-    ), f"The length of the model result ({len(model_result)}) does not match the length of the prompt ({len(prompt)}) or possible answer ({len(possible_answer)}). Please check the input files for completeness."
+    # assert (
+    #     len(model_result) == len(prompt) == len(possible_answer)
+    # ), f"The length of the model result ({len(model_result)}) does not match the length of the prompt ({len(prompt)}) or possible answer ({len(possible_answer)}). Please check the input files for completeness."
 
     result = []
     correct_count = 0

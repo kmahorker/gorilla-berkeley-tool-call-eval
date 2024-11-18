@@ -112,6 +112,7 @@ JS_TYPE_CONVERSION = {
 }
 
 UNDERSCORE_TO_DOT = [
+    "oceanwater/gpt-4o-2024-08-06-FC",
     "gpt-4o-2024-08-06-FC",
     "gpt-4o-2024-05-13-FC",
     "gpt-4o-mini-2024-07-18-FC",

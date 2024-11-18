@@ -655,6 +655,12 @@ MODEL_METADATA_MAPPING = {
         "BitAgent",
         "Proprietary",
     ],
+    "oceanwater/gpt-4o-2024-08-06-FC": [
+        "Oceanwater GPT-4o-2024-08-06 (FC)",
+        "https://openai.com/index/hello-gpt-4o/",
+        "Oceanwater OpenAI",
+        "Proprietary",
+    ],
 }
 
 INPUT_PRICE_PER_MILLION_TOKEN = {
@@ -681,6 +687,7 @@ INPUT_PRICE_PER_MILLION_TOKEN = {
     "mistral-tiny-2312": 0.25,
     "o1-preview-2024-09-12": 15,
     "o1-mini-2024-09-12": 3,
+    "oceanwater/gpt-4o-2024-08-06-FC": 2.5,
     "gpt-4o-2024-05-13-FC": 5,
     "gpt-4o-2024-05-13": 5,
     "gpt-4o-2024-08-06-FC": 2.5,
@@ -739,6 +746,7 @@ OUTPUT_PRICE_PER_MILLION_TOKEN = {
     "mistral-tiny-2312": 0.25,
     "o1-preview-2024-09-12": 60,
     "o1-mini-2024-09-12": 12,
+    "oceanwater/gpt-4o-2024-08-06-FC": 10,
     "gpt-4o-2024-05-13-FC": 15,
     "gpt-4o-2024-05-13": 15,
     "gpt-4o-2024-08-06-FC": 10,
